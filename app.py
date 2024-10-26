@@ -1,67 +1,118 @@
 import tkinter as tk
-import tkinter.ttk as ttk
 from graph import Graph
 from graph import Edge
+from collections import defaultdict
+
+WIDTH, HEIGHT = 800, 800
 
 
 class GraphFrame(tk.Canvas):
-    def __init__(self, parent, graph_depth=5):
+    PADDING = 20
+    VERTICE_SIZE = 20
+    CANVAS_SIZE_X = WIDTH
+    CANVAS_SIZE_Y = HEIGHT
+
+    def __init__(self, parent, graph_depth=5, max_children=3):
         super().__init__(parent)
         self.graph_depth = graph_depth
-        self.graph = Graph(self.graph_depth)
+        self.max_children = max_children
+        self.graph = Graph(self.graph_depth, max_children)
         self.configure(
             highlightthickness=0
         )
-        self.graph_level_frames = []
-        self.edge_to_widget = dict()
-        self.canvas = tk.Canvas(self)
-        graph_by_level = self.graph.get_graph_by_levels()
-
-        for r in range(self.graph_depth):
-            self.rowconfigure(index=r, weight=1)
-            edges = graph_by_level[r]
-            new_frame = GraphLevelCanvas(self, edges)
-            self.graph_level_frames.append(new_frame)
-
-        self._connect_graph(self.graph.root)
-        self.canvas.grid(rowspan=self.graph_depth)
-
-        for r in range(self.graph_depth):
-            self.graph_level_frames[r].grid(row=r, column=0)
-
-    def _connect_graph(self, current_edge: Edge):
-        edge_widget: ttk.Button = self.edge_to_widget[current_edge]
-        cur_x, cur_y = edge_widget.winfo_pointerx(), edge_widget.winfo_pointery()
-        for child in current_edge.children:
-            child_edge_widget: ttk.Button = self.edge_to_widget[child]
-            child_x = child_edge_widget.winfo_pointerx()
-            child_y = child_edge_widget.winfo_pointery()
-            
-            self.canvas.create_line(cur_x, cur_y, child_x, child_y, fill="black", width=5)
-
-            self._connect_graph(child)
-
-
-class GraphLevelCanvas(tk.Canvas):
-    def __init__(self, parent: GraphFrame, edges):
-        super().__init__(parent)
-        self.configure(
-            highlightthickness=0,
+        self.canvas = tk.Canvas(
+            self,
+            bg="white",
+            width=self.CANVAS_SIZE_X,
+            height=self.CANVAS_SIZE_Y
         )
-        for i in range(len(edges)):
-            btn = ttk.Button(self, text=f"{i}", width=3)
-            btn.pack(side='left', padx=10, pady=10)
-            parent.edge_to_widget[edges[i]] = btn
+        
+        self.graph_by_levels = self.graph.get_graph_by_levels()
+        self.vertice_to_rectangle = dict()
+        self.graph_as_dict = self.graph.get_graph_as_dict()
+        
+        self._draw_graph_by_levels()
+        self._connect_graph()
+        self.canvas.pack(anchor=tk.CENTER, expand=1)
+
+    def _set_vertice_to_rectangle(self):
+        cur_number = 1
+
+        for key in self.graph_by_levels:
+            for edge in self.graph_by_levels[key]:
+                self.vertice_to_rectangle[edge[0]] = cur_number
+                cur_number += 1
+
+    def _connect_graph(self):
+        self._set_vertice_to_rectangle()
+        
+        for key in self.graph_as_dict:
+            rectangle_id = self.vertice_to_rectangle[key[0]]
+
+            left_x, left_y, right_x, right_y = self.canvas.coords(
+                rectangle_id
+            )
+            start_x = (left_x+right_x)//2
+            start_y = (left_y+right_y)//2 + self.VERTICE_SIZE//2
+
+            for child in self.graph_as_dict[key]:
+                child_rectangle_id = self.vertice_to_rectangle[child[0]]
+                left_x, left_y, right_x, right_y = self.canvas.coords(
+                    child_rectangle_id
+                )
+
+                end_x = (left_x+right_x)//2
+                end_y = (left_y+right_y)//2 - self.VERTICE_SIZE//2
+
+                self.canvas.create_line(start_x, start_y, end_x, end_y)
+
+    def _draw_rectangle(self, center_x, center_y, value=None,):
+        self.canvas.create_rectangle(
+            center_x - self.VERTICE_SIZE//2,
+            center_y - self.VERTICE_SIZE//2,
+            center_x + self.VERTICE_SIZE//2,
+            center_y + self.VERTICE_SIZE//2,
+            fill="white",
+        )
+
+    def _draw_graph_by_levels(self):
+        cur_y = self.VERTICE_SIZE//2 + self.PADDING
+        cur_x = self.CANVAS_SIZE_X//2
+        for level in self.graph_by_levels.keys():
+            vertices = self.graph_by_levels[level]
+
+            diff = len(vertices)//2
+            if not len(vertices) % 2:
+                for i in range(-diff, diff, 1):
+                    if diff:
+                        self._draw_rectangle(
+                            cur_x + i * (self.VERTICE_SIZE + self.PADDING),
+                            cur_y
+                        )
+            else:
+                if not diff:
+                    self._draw_rectangle(
+                        cur_x,
+                        cur_y
+                    )
+                else:
+                    for i in range(-diff, diff+1, 1):
+                        self._draw_rectangle(
+                            cur_x + i * (self.VERTICE_SIZE + self.PADDING),
+                            cur_y
+                        )
+
+            cur_y += self.VERTICE_SIZE + self.PADDING
 
 
 class Root(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Zalupa osla")
-        self.geometry('600x400')
+        self.title("Kurwa bober")
+        self.geometry(f"{WIDTH}x{HEIGHT}")
 
 
 if __name__ == "__main__":
     root = Root()
-    GraphFrame(root, 5).pack()
+    GraphFrame(root, graph_depth=5, max_children = 2).pack()
     root.mainloop()

@@ -26,22 +26,19 @@ class Edge:
         ancestors = [child.get_number() for child in self.children]
         return f"Вершина #{self.number[0]}\nЗначение: {self.value[0]}\nПотомки: {ancestors}\n"
 
-    def __eq__(self, another):
-        return hasattr(another, 'number') and self.number[0] == another.number
-
-    def __hash__(self):
-        return hash(self.number[0])
-
 
 class Graph:
     def __init__(
         self,
-        depth: int = 5
+        depth: int = 5,
+        max_children: int = 3
     ):
         self.depth = depth
         self.root = Edge()
         self.edge_number = 1
         self.leaves = list()
+        self.graph_as_dict = dict()
+        self.max_children = max_children
 
         random.seed()
 
@@ -50,13 +47,16 @@ class Graph:
 
     def _generate_graph(self, current_edge: Edge, current_depth: int = 1):
         if current_depth < self.depth:
-            children_number = random.randrange(1, 4)
+            self.graph_as_dict[current_edge.number] = []
+
+            children_number = random.randrange(1, self.max_children+1)
             for _ in range(children_number):
                 self.edge_number += 1
                 new_edge = Edge(
                     number=self.edge_number
                 )
                 current_edge.add_edge_to_children(new_edge)
+                self.graph_as_dict[current_edge.number].append(new_edge.number)
 
                 if current_depth == self.depth:
                     self.leaves.append(new_edge)
@@ -67,10 +67,16 @@ class Graph:
         for leaf in self.leaves:
             print(leaf)
 
+    def get_graph_as_dict(self):
+        return self.graph_as_dict
+
     def get_graph_by_levels(self):
         from collections import defaultdict
         res_dict = defaultdict(list)
         self._recursively_get_graph_by_levels(self.root, 1, res_dict=res_dict)
+        for key in res_dict:
+            res_dict[key] = sorted(res_dict[key])
+
         return res_dict
 
     def _recursively_get_graph_by_levels(
@@ -79,7 +85,7 @@ class Graph:
         current_level,
         res_dict
     ):
-        res_dict[current_level - 1].append(current_edge)
+        res_dict[current_level].append(current_edge.number)
         for child in current_edge.children:
             self._recursively_get_graph_by_levels(
                 child,
@@ -103,3 +109,5 @@ if __name__ == "__main__":
 
     test_graph = Graph(3)
     print(test_graph)
+
+    print(test_graph.get_graph_by_levels())
