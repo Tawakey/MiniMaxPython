@@ -1,113 +1,122 @@
+import gc
+from typing import Union
 import random
+import time
+from collections import defaultdict
 
 
-class Edge:
-    def __init__(
+class Vertice:
+    """
+    Represents a vertice of the game tree
+    """
+    def __init__(self):
+        self.value = None
+        self.children = []
+
+    def set_value(self, new_value: int):
+        self.value = new_value
+
+    def get_value(self):
+        return self.value
+
+    def add_children(self, new_child):
+        self.children.append(new_child)
+
+    def get_children(self):
+        return self.children
+
+
+class Leaf(Vertice):
+    """
+    Represents a leaf of the game tree
+    """
+    def __init__(self):
+        self.value = None
+        self.start_values = []
+
+    def add_start_value(self, start_value: int):
+        self.start_values.append(start_value)
+
+    def get_start_values(self):
+        return self.start_values
+
+
+class GameTree:
+    """
+    Represents a game tree
+    """
+    def __init__(self):
+        self.root: Vertice = Vertice()
+        self.levels_count: int = 5
+        self.leaves = []
+        self.graph_by_level = defaultdict(list)
+
+        random.seed(time.time())
+
+        self.generate_tree()
+
+    def get_root(self):
+        return self.root
+
+    def get_levels_count(self):
+        return self.levels_count
+
+    def _recursively_generate_tree(
         self,
-        number: int = 1,
-        value: float = None,
+        cur_vertice: Union[Vertice, Leaf],
+        cur_level: int
     ):
-        self.number = number,
-        self.value = value,
-        self.children = list()
+        if cur_level == self.levels_count:
+            new_leaf: Leaf = Leaf()
+            start_values_count = random.randint(1, 2)
+            for _ in range(start_values_count):
+                new_leaf.add_start_value(0)
 
-    def add_edge_to_children(
+            cur_vertice.add_children(new_leaf)
+        else:
+            children_vertices_count = random.randint(1, cur_level+1)
+            for _ in range(children_vertices_count):
+                new_vertice: Vertice = Vertice()
+                self._recursively_generate_tree(new_vertice, cur_level+1)
+
+                cur_vertice.add_children(new_vertice)
+
+    def _recursively_delete_tree(
         self,
-        new_edge,
+        cur_vertice: Union[Vertice, Leaf],
+        cur_level: int
     ):
-        self.children.append(new_edge)
-
-    def get_number(
-        self,
-    ):
-        return self.number[0]
-
-    def __str__(self):
-        ancestors = [child.get_number() for child in self.children]
-        return f"Вершина #{self.number[0]}\nЗначение: {self.value[0]}\nПотомки: {ancestors}\n"
-
-
-class Graph:
-    def __init__(
-        self,
-        depth: int = 5,
-        max_children: int = 3
-    ):
-        self.depth = depth
-        self.root = Edge()
-        self.edge_number = 1
-        self.leaves = list()
-        self.graph_as_dict = dict()
-        self.max_children = max_children
-
-        random.seed()
-
-        # start from root
-        self._generate_graph(self.root, 1)
-
-    def _generate_graph(self, current_edge: Edge, current_depth: int = 1):
-        if current_depth < self.depth:
-            self.graph_as_dict[current_edge.number] = []
-
-            children_number = random.randrange(1, self.max_children+1)
-            for _ in range(children_number):
-                self.edge_number += 1
-                new_edge = Edge(
-                    number=self.edge_number
-                )
-                current_edge.add_edge_to_children(new_edge)
-                self.graph_as_dict[current_edge.number].append(new_edge.number)
-
-                if current_depth == self.depth:
-                    self.leaves.append(new_edge)
-
-                self._generate_graph(new_edge, current_depth + 1)
-
-    def print_leaves(self):
-        for leaf in self.leaves:
-            print(leaf)
-
-    def get_graph_as_dict(self):
-        return self.graph_as_dict
-
-    def get_graph_by_levels(self):
-        from collections import defaultdict
-        res_dict = defaultdict(list)
-        self._recursively_get_graph_by_levels(self.root, 1, res_dict=res_dict)
-        for key in res_dict:
-            res_dict[key] = sorted(res_dict[key])
-
-        return res_dict
+        if cur_level == self.levels_count:
+            del cur_vertice
+        else:
+            children_list = cur_vertice.get_children()
+            for child in children_list:
+                self._recursively_delete_tree(child, cur_level+1)
+                del child
 
     def _recursively_get_graph_by_levels(
         self,
-        current_edge: Edge,
-        current_level,
-        res_dict
+        cur_vertice: Union[Vertice, Leaf],
+        cur_level: int
     ):
-        res_dict[current_level].append(current_edge.number)
-        for child in current_edge.children:
-            self._recursively_get_graph_by_levels(
-                child,
-                current_level + 1,
-                res_dict
-            )
+        self.graph_by_level[cur_level].append(cur_vertice)
+        if cur_level != self.levels_count:
+            children_list = cur_vertice.get_children()
+            for child in children_list:
+                self._recursively_get_graph_by_levels(
+                    child,
+                    cur_level+1
+                )
 
-    def _recursively_print_graph(self, current_edge: Edge):
-        print(current_edge)
-        for child in current_edge.children:
-            self._recursively_print_graph(child)
+    def generate_tree(self, levels_count: int = 5):
+        self._recursively_delete_tree(self.root, 1)
+        gc.collect()
 
-    def __str__(self):
-        self._recursively_print_graph(self.root)
-        return ""
+        self.levels_count = levels_count
 
+        self._recursively_generate_tree(self.root, 1)
+        self.graph_by_level.clear()
+        self._recursively_get_graph_by_levels(self.root, 1)
 
-if __name__ == "__main__":
-    test_edge = Edge()
-    print(test_edge)
-
-    test_graph = Graph(3)
-    print(test_graph)
-
-    print(test_graph.get_graph_by_levels())
+    def get_graph_by_levels(self):
+        return self.graph_by_level
