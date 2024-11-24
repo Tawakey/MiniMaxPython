@@ -1,11 +1,10 @@
 import gc
-from typing import Union
 import random
 import time
 from collections import defaultdict
 
 
-class Vertice:
+class Vertice(object):
     """
     Represents a vertice of the game tree
     """
@@ -26,34 +25,19 @@ class Vertice:
         return self.children
 
 
-class Leaf(Vertice):
-    """
-    Represents a leaf of the game tree
-    """
-    def __init__(self):
-        self.value = None
-        self.start_values = []
-
-    def add_start_value(self, start_value: int):
-        self.start_values.append(start_value)
-
-    def get_start_values(self):
-        return self.start_values
-
-
 class GameTree:
     """
     Represents a game tree
     """
-    def __init__(self):
+    def __init__(self, levels_count):
         self.root: Vertice = Vertice()
-        self.levels_count: int = 5
+        self.levels_count: int = levels_count
         self.leaves = []
         self.graph_by_level = defaultdict(list)
 
         random.seed(time.time())
 
-        self.generate_tree()
+        self.generate_tree(self.levels_count)
 
     def get_root(self):
         return self.root
@@ -63,18 +47,17 @@ class GameTree:
 
     def _recursively_generate_tree(
         self,
-        cur_vertice: Union[Vertice, Leaf],
+        cur_vertice: Vertice,
         cur_level: int
     ):
         if cur_level == self.levels_count:
-            new_leaf: Leaf = Leaf()
-            start_values_count = random.randint(1, 2)
-            for _ in range(start_values_count):
-                new_leaf.add_start_value(0)
-
-            cur_vertice.add_children(new_leaf)
+            children_vertices_count = random.randint(1, min(3, cur_level+1))
+            for _ in range(children_vertices_count):
+                new_leaf: Vertice = Vertice()
+                self.leaves.append(new_leaf)
+                cur_vertice.add_children(new_leaf)
         else:
-            children_vertices_count = random.randint(1, cur_level+1)
+            children_vertices_count = random.randint(1, min(3, cur_level+1))
             for _ in range(children_vertices_count):
                 new_vertice: Vertice = Vertice()
                 self._recursively_generate_tree(new_vertice, cur_level+1)
@@ -83,7 +66,7 @@ class GameTree:
 
     def _recursively_delete_tree(
         self,
-        cur_vertice: Union[Vertice, Leaf],
+        cur_vertice: Vertice,
         cur_level: int
     ):
         if cur_level == self.levels_count:
@@ -96,7 +79,7 @@ class GameTree:
 
     def _recursively_get_graph_by_levels(
         self,
-        cur_vertice: Union[Vertice, Leaf],
+        cur_vertice: Vertice,
         cur_level: int
     ):
         self.graph_by_level[cur_level].append(cur_vertice)
@@ -120,3 +103,20 @@ class GameTree:
 
     def get_graph_by_levels(self):
         return self.graph_by_level
+
+    def get_leaves(self):
+        return self.leaves
+
+    def get_leaves_count(self):
+        return len(self.leaves)
+
+    def _recursively_clear_values(self, cur_vertice: Vertice, cur_level):
+        cur_vertice.set_value(None)
+        children = cur_vertice.get_children()
+        for child in children:
+            child.set_value(None)
+            if cur_level <= self.levels_count - 1:
+                self._recursively_clear_values(child, cur_level+1)
+
+    def clear_values(self):
+        self._recursively_clear_values(self.root, 0)
