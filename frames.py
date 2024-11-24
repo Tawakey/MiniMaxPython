@@ -59,7 +59,7 @@ class TableFrame(tk.Frame):
         values = []
         for entry in self.entries:
             value = entry.get()
-            if not ((value is None) or not (value.isdigit())):
+            if value is not None:
                 values.append(int(value))
 
         return values
