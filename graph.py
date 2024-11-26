@@ -10,7 +10,19 @@ class Vertice(object):
     """
     def __init__(self):
         self.value = None
+        self.is_prunned = False
+        self.prun_reason: str = ""
         self.children = []
+
+    def prun(self, reason: str):
+        self.is_prunned = True
+        self.prun_reason = reason
+
+    def get_reason(self):
+        return self.prun_reason
+
+    def check_if_pruned(self):
+        return self.is_prunned
 
     def set_value(self, new_value: int):
         self.value = new_value
@@ -111,12 +123,12 @@ class GameTree:
         return len(self.leaves)
 
     def _recursively_clear_values(self, cur_vertice: Vertice, cur_level):
+        cur_vertice.is_prunned = False
         cur_vertice.set_value(None)
         children = cur_vertice.get_children()
         for child in children:
-            child.set_value(None)
-            if cur_level <= self.levels_count - 1:
+            if cur_level < self.levels_count:
                 self._recursively_clear_values(child, cur_level+1)
 
     def clear_values(self):
-        self._recursively_clear_values(self.root, 0)
+        self._recursively_clear_values(self.root, 1)

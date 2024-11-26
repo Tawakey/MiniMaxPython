@@ -6,9 +6,9 @@ from ui_entities import Vertice as VerticeUI
 from ui_entities import StartValue
 
 
-RADIUS = 9
+RADIUS = 20
 HORIZONTAL_PADDING = 20
-VERTICAL_PADDING = 25
+VERTICAL_PADDING = 40
 
 
 class Root(tk.Tk):
@@ -105,7 +105,7 @@ class TableFrame(tk.Frame):
 
 class GraphFrame(tk.Frame):
     def __init__(self, WIDTH, HEIGHT, parent: Root):
-        super().__init__(master=parent)
+        super().__init__(master=parent, width=WIDTH)
         self.CANVAS_SIZE_X = WIDTH
         self.CANVAS_SIZE_Y = 600
         self.c = tk.Canvas(
@@ -121,11 +121,16 @@ class GraphFrame(tk.Frame):
         self.pack()
 
     def _connect_two_entities(self, first, second):
+        fill = "black"
+        if first.is_pruned() or second.is_pruned():
+            fill = "red"
+
         self.c.create_line(
             first.x,
             first.y + RADIUS,
             second.x,
-            second.y - RADIUS
+            second.y - RADIUS,
+            fill=fill
         )
 
         self.c.pack()
@@ -246,7 +251,7 @@ class GraphFrame(tk.Frame):
         self._connect_entities()
 
     def _draw_moves(self, levels_count):
-        cur_y = VERTICAL_PADDING
+        cur_y = RADIUS+VERTICAL_PADDING
         cur_move = self.first_move
 
         for _ in range(levels_count):
