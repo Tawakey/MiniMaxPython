@@ -8,7 +8,7 @@ from callbacker import Callbacker
 
 
 WIDTH, HEIGHT = 1200, 800
-LEVELS_COUNT = 5
+LEVELS_COUNT = 4
 
 
 START_POSITIONS = ("MIN", "MAX")

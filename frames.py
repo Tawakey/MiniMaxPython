@@ -7,8 +7,8 @@ from ui_entities import StartValue
 
 
 RADIUS = 20
-HORIZONTAL_PADDING = 20
-VERTICAL_PADDING = 40
+HORIZONTAL_PADDING = 16
+VERTICAL_PADDING = 32
 
 
 class Root(tk.Tk):
@@ -105,20 +105,20 @@ class TableFrame(tk.Frame):
 
 class GraphFrame(tk.Frame):
     def __init__(self, WIDTH, HEIGHT, parent: Root):
-        super().__init__(master=parent, width=WIDTH)
+        super().__init__(master=parent)
         self.CANVAS_SIZE_X = WIDTH
-        self.CANVAS_SIZE_Y = 600
+        self.CANVAS_SIZE_Y = 500
         self.c = tk.Canvas(
             self,
-            width=self.CANVAS_SIZE_X - HORIZONTAL_PADDING,
-            height=self.CANVAS_SIZE_Y - HORIZONTAL_PADDING
+            width=self.CANVAS_SIZE_X,
+            height=self.CANVAS_SIZE_Y
         )
         self.first_move = "MIN"
         self.entities = []
         self.graph_vertice_to_ui = {}
         self.leaves_to_ui = {}
         self.c.pack()
-        self.pack()
+        self.pack(anchor="center")
 
     def _connect_two_entities(self, first, second):
         fill = "black"

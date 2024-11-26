@@ -8,7 +8,7 @@ from tkinter.ttk import Combobox
 from algorithms import run_minimax as algo_run_minimax
 from algorithms import run_minimax_with_pruning
 
-LEVELS_COUNT = 5
+LEVELS_COUNT = 4
 
 
 class Callbacker:
