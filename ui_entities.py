@@ -10,6 +10,13 @@ class Vertice:
         self.y = y
         self.r = radius
         self.reference = vertice
+        self.visited = False
+
+    def get_visited(self):
+        return self.visited
+
+    def set_visited(self):
+        self.visited = True
 
     def get_reference(self):
         return self.reference
@@ -47,8 +54,20 @@ class StartValue:
         self.reference = vertice
         self.number = number
 
+    def get_children(self):
+        return []
+
+    def get_visited(self):
+        return self.get_visited()
+
+    def set_visited(self):
+        self.reference.set_visited()
+
     def is_pruned(self):
-        return False
+        return self.reference.check_if_pruned()
+    
+    def get_reference(self):
+        return self.reference
 
     def draw(self, canvas: tk.Canvas):
         value_to_draw = self.reference.get_value()

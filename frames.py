@@ -122,7 +122,7 @@ class GraphFrame(tk.Frame):
 
     def _connect_two_entities(self, first, second):
         fill = "black"
-        if first.is_pruned() or second.is_pruned():
+        if first.is_pruned() and second.is_pruned():
             fill = "red"
 
         self.c.create_line(
@@ -137,11 +137,10 @@ class GraphFrame(tk.Frame):
 
     def _connect_entities(self):
         for entity in self.entities:
-            if isinstance(entity, VerticeUI):
-                graph_vertice: Vertice = entity.get_reference()
-                for child in graph_vertice.get_children():
-                    child_ui = self.graph_vertice_to_ui[child]
-                    self._connect_two_entities(entity, child_ui)
+            graph_vertice: Vertice = entity.get_reference()
+            for child in graph_vertice.get_children():
+                child_ui = self.graph_vertice_to_ui[child]
+                self._connect_two_entities(entity, child_ui)
 
     def set_first_move(self, first_move):
         self.first_move = first_move

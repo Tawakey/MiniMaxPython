@@ -6,11 +6,11 @@ MIN, MAX = 0, 1
 
 def prun_verticies(cur_vertice: Vertice, reason: str):
     children_list = cur_vertice.get_children()
-    if len(children_list):
+    if not cur_vertice.get_visited():
         cur_vertice.prun(reason)
-    for child in children_list:
-        if len(child.get_children()):
-            prun_verticies(child, reason)
+        for child in children_list:
+            if not child.get_visited():
+                prun_verticies(child, "")
 
 
 def _get_next_move(cur_move: int):
@@ -67,6 +67,7 @@ def _min_value(
     beta: float,
     direction: int
 ):
+    was_prunned = False
     children_list = cur_vertice.get_children()
     if not direction:
         children_list = children_list[::-1]
@@ -74,16 +75,20 @@ def _min_value(
         return cur_vertice.get_value()
 
     v = float("inf")
-    for child in children_list:
-        new_v = _max_value(child, alpha, beta, direction)
-        if new_v < v:
-            v = new_v
-        if alpha is not None and new_v <= alpha:
-            reason = f"{new_v}<={alpha}"
-            cur_vertice.prun(reason)
-            return v
-        if (beta is None) or (new_v < beta):
-            beta = new_v
+    for i, child in enumerate(children_list):
+        if not was_prunned:
+            new_v = _max_value(child, alpha, beta, direction)
+            child.set_visited()
+            if new_v < v:
+                v = new_v
+            if alpha is not None and new_v <= alpha and i != len(children_list)-1:
+                reason = f"{new_v}<={alpha}"
+                prun_verticies(cur_vertice, reason)
+                was_prunned = True
+            if (beta is None) or (new_v < beta):
+                beta = new_v
+        else:
+            child.prun()
 
     cur_vertice.set_value(v)
     return v
@@ -95,6 +100,7 @@ def _max_value(
     beta: float,
     direction: int
 ):
+    was_prunned = False
     children_list = cur_vertice.get_children()
     if not direction:
         children_list = children_list[::-1]
@@ -102,16 +108,20 @@ def _max_value(
         return cur_vertice.get_value()
 
     v = -float("inf")
-    for child in children_list:
-        new_v = _min_value(child, alpha, beta, direction)
-        if new_v > v:
-            v = new_v
-        if beta is not None and new_v >= beta:
-            reason = f"{new_v}>={beta}"
-            cur_vertice.prun(reason)
-            return v
-        if alpha is None or new_v > alpha:
-            alpha = new_v
+    for i, child in enumerate(children_list):
+        if not was_prunned:
+            new_v = _min_value(child, alpha, beta, direction)
+            child.set_visited()
+            if new_v > v:
+                v = new_v
+            if beta is not None and new_v >= beta and i != len(children_list)-1:
+                reason = f"{new_v}>={beta}"
+                prun_verticies(cur_vertice, reason)
+                was_prunned = True
+            if alpha is None or new_v > alpha:
+                alpha = new_v
+        else:
+            child.prun()
 
     cur_vertice.set_value(v)
     return v

@@ -12,9 +12,16 @@ class Vertice(object):
         self.value = None
         self.is_prunned = False
         self.prun_reason: str = ""
+        self.is_visited = False
         self.children = []
 
-    def prun(self, reason: str):
+    def set_visited(self):
+        self.is_visited = True
+
+    def get_visited(self):
+        return self.is_visited
+
+    def prun(self, reason: str = ""):
         self.is_prunned = True
         self.prun_reason = reason
 
